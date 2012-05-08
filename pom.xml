@@ -12,6 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <LASER.target.jar>target/LASER-1.0-jar-with-dependencies.jar</LASER.target.jar>
     </properties>
 
     <build>
@@ -29,7 +30,28 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>hadoop</executable>
+                    <arguments>
+                        <argument>jar</argument>
+                        <argument>${project.basedir}/${LASER.target.jar}</argument>
+                        <argument>LASER.App</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
         </plugins>
+
+
     </build>
 
     <dependencies>
