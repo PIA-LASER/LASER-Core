@@ -32,8 +32,7 @@ public class HDFSUtil {
     public static boolean cleanupTemporaryPath() throws IOException{
         FileSystem hdfs = FileSystem.get(new Configuration());
 
-        Class callingClass = new Throwable().getStackTrace()[2].getClass();
-        Logger logger = LoggerFactory.getLogger(callingClass);
+        Logger logger = LoggerFactory.getLogger(HDFSUtil.class);
 
         boolean deleteSucceeded = hdfs.delete(getTemporaryPath(), true);
 
