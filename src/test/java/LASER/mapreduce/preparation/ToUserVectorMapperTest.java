@@ -5,7 +5,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.mahout.cf.taste.hadoop.EntityPrefWritable;
 import org.apache.mahout.math.VarIntWritable;
-import org.apache.mahout.math.VarLongWritable;
 import org.junit.Test;
 
 import java.io.IOException;
