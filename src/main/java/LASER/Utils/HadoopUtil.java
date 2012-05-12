@@ -41,7 +41,7 @@ public class HadoopUtil {
 
         if (reducer.equals(Reducer.class)) {
             if (mapper.equals(Mapper.class)) {
-                throw new IllegalStateException("Can't figure out the user class jar file from mapper/reducer");
+                throw new IllegalStateException();
             }
             job.setJarByClass(mapper);
         } else {
@@ -60,9 +60,6 @@ public class HadoopUtil {
         job.setReducerClass(reducer);
         job.setOutputKeyClass(reducerKey);
         job.setOutputValueClass(reducerValue);
-
-        FileInputFormat.addInputPath(job, inputPath);
-        FileOutputFormat.setOutputPath(job, outputPath);
 
         job.setOutputFormatClass(outputFormat);
         config.set("mapred.output.dir", outputPath.toString());
