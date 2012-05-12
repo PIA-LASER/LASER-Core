@@ -13,6 +13,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.math.VarIntWritable;
+import org.apache.mahout.math.VarLongWritable;
 import org.apache.mahout.math.VectorWritable;
 
 import java.io.IOException;

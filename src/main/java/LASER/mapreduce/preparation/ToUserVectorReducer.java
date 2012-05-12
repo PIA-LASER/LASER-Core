@@ -7,21 +7,15 @@ import org.apache.mahout.math.*;
 
 import java.io.IOException;
 
-public class ToUserVectorReducer extends Reducer<VarIntWritable, VarLongWritable, VarIntWritable, VectorWritable> {
+public class ToUserVectorReducer extends Reducer<VarIntWritable, VectorWritable, VarIntWritable, VectorWritable> {
 
     @Override
-    protected void reduce(VarIntWritable userId, Iterable<VarLongWritable> preferences, Context context)
+    protected void reduce(VarIntWritable userId, Iterable<VectorWritable> preferences, Context context)
             throws IOException, InterruptedException {
 
-        Vector preferenceVector = new RandomAccessSparseVector(Integer.MAX_VALUE, 100);
+        VectorWritable vw = VectorWritable.merge(preferences.iterator());
+        vw.setWritesLaxPrecision(true);
 
-        for (VarLongWritable itemPref : preferences) {
-            int index = LaserUtils.idToIndex(itemPref.get());
-            float pref = ((EntityPrefWritable) itemPref).getPrefValue();
-
-            preferenceVector.setQuick(index, pref);
-        }
-
-        context.write(userId, new VectorWritable(preferenceVector));
+        context.write(userId, vw);
     }
 }

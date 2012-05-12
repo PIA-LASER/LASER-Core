@@ -21,10 +21,9 @@ public class ToItemVectorMapperTest {
     @Before
     public void setup(){
         //input
-        userId =1;
+        userId = 1;
         prefs = new RandomAccessSparseVector(Integer.MAX_VALUE, 3);
         prefs.setQuick(5,1.0);
-
 
         //context
         context =  mock(Mapper.Context.class);
