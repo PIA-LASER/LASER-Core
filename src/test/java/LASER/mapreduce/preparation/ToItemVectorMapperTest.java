@@ -1,5 +1,7 @@
 package LASER.mapreduce.preparation;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.VarIntWritable;
@@ -40,5 +42,17 @@ public class ToItemVectorMapperTest {
         mapper.map(new VarIntWritable(userId), new VectorWritable(prefs), context);
 
         verify(context, times(1)).write(new VarIntWritable(5), new VectorWritable(outputVector, true));
+    }
+
+    @Test
+    public void testSimilarityMeasureInstantiation() throws InterruptedException, IOException{
+        Configuration conf = new Configuration();
+        conf.set("similarity","CosineSimilarity");
+
+        Mapper.Context mockedContext = mock(Mapper.Context.class);
+        stub(mockedContext.getConfiguration()).toReturn(conf);
+
+        ToItemVectorMapper mapper = new ToItemVectorMapper();
+        mapper.setup(mockedContext);
     }
 }
