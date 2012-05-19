@@ -33,7 +33,7 @@ public class VectorNormMapper extends Mapper<VarIntWritable, VectorWritable, Var
 
             userItemVector.setQuick(itemId.get(), elem.get());
 
-            context.write(new VarIntWritable(elem.index()), new VectorWritable(userItemVector, true));
+            context.write(new VarIntWritable(elem.index()), new VectorWritable(userItemVector));
         }
     }
 }

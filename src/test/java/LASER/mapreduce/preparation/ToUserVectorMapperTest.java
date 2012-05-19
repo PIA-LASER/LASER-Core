@@ -32,7 +32,7 @@ public class ToUserVectorMapperTest {
         itemID = 123456;
         pref = 0.9f;
 
-        output = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1), true);
+        output = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1));
 
         output.get().setQuick(itemID, pref);
 

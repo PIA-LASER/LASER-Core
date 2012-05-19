@@ -51,7 +51,7 @@ public class VectorNormMapperTest {
         context = mock(Mapper.Context.class);
 
         conf = new Configuration();
-        conf.set("similarityName", "CosineSimilarity");
+        conf.set("similarity", "CosineSimilarity");
 
         stub(context.getConfiguration()).toReturn(conf);
     }

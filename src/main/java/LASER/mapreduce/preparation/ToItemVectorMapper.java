@@ -42,7 +42,7 @@ public class ToItemVectorMapper extends Mapper<VarIntWritable, VectorWritable, V
         int userId = key.get();
 
         VectorWritable preferencesVector = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1));
-        preferencesVector.setWritesLaxPrecision(true);
+        //preferencesVector.setWritesLaxPrecision(true);
 
         Iterator<Vector.Element> iterator = prefs.get().iterateNonZero();
 

@@ -6,14 +6,15 @@ import LASER.mapreduce.preparation.ToItemVectorMapper;
 import LASER.mapreduce.preparation.ToItemVectorReducer;
 import LASER.mapreduce.preparation.ToUserVectorMapper;
 import LASER.mapreduce.preparation.ToUserVectorReducer;
-import LASER.mapreduce.similarity.VectorNormMapper;
-import LASER.mapreduce.similarity.VectorNormMergeReducer;
+import LASER.mapreduce.similarity.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.mahout.cf.taste.similarity.ItemSimilarity;
 import org.apache.mahout.math.VarIntWritable;
 import org.apache.mahout.math.VarLongWritable;
 import org.apache.mahout.math.VectorWritable;
@@ -36,7 +37,8 @@ public class App
         Path userVectors = new Path(HDFSUtil.getTemporaryPath(), "userVectors");
         Path itemVectors = new Path(HDFSUtil.getTemporaryPath(), "itemVectors");
         Path normedVectors = new Path(HDFSUtil.getTemporaryPath(), "normedVectors");
-
+        Path partialDots = new Path(HDFSUtil.getTemporaryPath(), "partialDots");
+        Path similarityMatrix = new Path(HDFSUtil.getTemporaryPath(), "similarityMatrix");
         //Configuration
 
         Configuration config = new Configuration();
@@ -98,6 +100,8 @@ public class App
                 config
         );
 
+        normsJob.setCombinerClass(MergeVectorsCombiner.class);
+
         success = normsJob.waitForCompletion(true);
 
         if(!success) {
@@ -106,8 +110,48 @@ public class App
             HDFSUtil.cleanupTemporaryPath();
             return;
         }
-        //build similarity matrix
 
-        //recommendation
+        Job partialDotJob = HadoopUtil.buildJob(
+                normedVectors,
+                partialDots,
+                PartialDotMapper.class,
+                VarIntWritable.class,
+                VectorWritable.class,
+                ItemSimilarityReducer.class,
+                VarIntWritable.class,
+                VectorWritable.class,
+                config);
+
+        partialDotJob.setCombinerClass(PartialDotSumCombiner.class);
+
+        success = partialDotJob.waitForCompletion(true);
+
+        if(!success) {
+            logger.error("PartialDotJob failed. Aborting.");
+            logger.info("Cleaning up temporary files.");
+            HDFSUtil.cleanupTemporaryPath();
+
+            throw new IllegalStateException();
+        }
+
+        Job symSimilarityMatrixJob = HadoopUtil.buildJob(
+                partialDots,
+                similarityMatrix,
+                SimilarityMatrixMapper.class,
+                VarIntWritable.class,
+                VectorWritable.class,
+                MergeVectorsCombiner.class,
+                VarIntWritable.class,
+                VectorWritable.class,
+                config);
+
+        success = symSimilarityMatrixJob.waitForCompletion(true);
+
+        if(!success) {
+            logger.error("SymSimilarityMatrixJob failed. Aborting.");
+            logger.info("Cleaning up temporary files.");
+            HDFSUtil.cleanupTemporaryPath();
+            throw new IllegalStateException();
+        }
     }
 }

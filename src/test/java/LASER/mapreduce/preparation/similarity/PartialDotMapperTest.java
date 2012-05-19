@@ -58,9 +58,7 @@ public class PartialDotMapperTest {
         PartialDotMapper mapper = new PartialDotMapper();
 
         Configuration conf = new Configuration();
-        conf.set("similarityName","CosineSimilarity");
-        conf.set("similarityClasspath","LASER.mapreduce.similarity.measures");
-
+        conf.set("similarity","CosineSimilarity");
 
         Mapper.Context context = mock(Mapper.Context.class);
 
