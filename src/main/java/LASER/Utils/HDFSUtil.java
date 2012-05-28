@@ -44,4 +44,20 @@ public class HDFSUtil {
 
         return deleteSucceeded;
     }
+
+    public static boolean cleanupOutputPath() throws IOException{
+        FileSystem hdfs = FileSystem.get(new Configuration());
+
+        Logger logger = LoggerFactory.getLogger(HDFSUtil.class);
+
+        boolean deleteSucceeded = hdfs.delete(getOutputPath(), true);
+
+        if(deleteSucceeded) {
+            logger.info("Remaining output files successfully removed.");
+        } else {
+            logger.warn("Could not remove output files. They might have already been removed in a previous run. " + getTemporaryPath().toString());
+        }
+
+        return deleteSucceeded;
+    }
 }
