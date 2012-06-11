@@ -29,11 +29,9 @@ public class VectorNormMapper extends Mapper<VarIntWritable, VectorWritable, Var
         while (iter.hasNext()) {
             Vector.Element elem = iter.next();
 
-            Vector userItemVector = new RandomAccessSparseVector(Integer.MAX_VALUE, 1);
-
+            Vector userItemVector = new RandomAccessSparseVector(Integer.MAX_VALUE);
             userItemVector.setQuick(itemId.get(), elem.get());
-
-            context.write(new VarIntWritable(elem.index()), new VectorWritable(userItemVector));
+            context.write(new VarIntWritable(elem.index()), new VectorWritable(userItemVector, true));
         }
     }
 }

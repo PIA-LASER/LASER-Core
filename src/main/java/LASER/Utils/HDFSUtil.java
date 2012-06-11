@@ -29,8 +29,12 @@ public class HDFSUtil {
         return new Path(getLaserPath(),"temp");
     }
 
-    public static boolean cleanupTemporaryPath() throws IOException{
-        FileSystem hdfs = FileSystem.get(new Configuration());
+    public static Path getDebugPath() {
+        return new Path(getLaserPath(), "debug");
+    }
+
+    public static boolean cleanupTemporaryPath(Configuration config) throws IOException{
+        FileSystem hdfs = FileSystem.get(config);
 
         Logger logger = LoggerFactory.getLogger(HDFSUtil.class);
 
@@ -45,8 +49,8 @@ public class HDFSUtil {
         return deleteSucceeded;
     }
 
-    public static boolean cleanupOutputPath() throws IOException{
-        FileSystem hdfs = FileSystem.get(new Configuration());
+    public static boolean cleanupOutputPath(Configuration config) throws IOException{
+        FileSystem hdfs = FileSystem.get(config);
 
         Logger logger = LoggerFactory.getLogger(HDFSUtil.class);
 
@@ -56,6 +60,22 @@ public class HDFSUtil {
             logger.info("Remaining output files successfully removed.");
         } else {
             logger.warn("Could not remove output files. They might have already been removed in a previous run. " + getTemporaryPath().toString());
+        }
+
+        return deleteSucceeded;
+    }
+
+    public static boolean cleanupDebugPath(Configuration config) throws IOException{
+        FileSystem hdfs = FileSystem.get(config);
+
+        Logger logger = LoggerFactory.getLogger(HDFSUtil.class);
+
+        boolean deleteSucceeded = hdfs.delete(getDebugPath(), true);
+
+        if(deleteSucceeded) {
+            logger.info("Remaining debug files successfully removed.");
+        } else {
+            logger.warn("Could not remove output files. They might have already been removed in a previous run. " + getDebugPath().toString());
         }
 
         return deleteSucceeded;

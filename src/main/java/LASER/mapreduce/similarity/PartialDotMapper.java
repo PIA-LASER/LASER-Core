@@ -36,7 +36,7 @@ public class PartialDotMapper extends Mapper<VarIntWritable, VectorWritable, Var
 
         for (int leftIndex = 0; leftIndex < numElements; leftIndex++) {
             Vector.Element leftElement = vectorElements[leftIndex];
-            VectorWritable vw = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 100));
+            VectorWritable vw = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 100), true);
 
             for (int rightIndex = leftIndex; rightIndex < numElements; rightIndex++) {
                 Vector.Element rightElement = vectorElements[rightIndex];

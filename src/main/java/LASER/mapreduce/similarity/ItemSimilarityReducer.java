@@ -32,7 +32,7 @@ public class ItemSimilarityReducer extends Reducer<VarIntWritable, VectorWritabl
 
                 simPair.setQuick(elem.index(), sim);
 
-                context.write(key, new VectorWritable(simPair));
+                context.write(key, new VectorWritable(simPair, true));
             }
         }
     }

@@ -13,6 +13,7 @@ public class ToItemVectorReducer extends Reducer<VarIntWritable, VectorWritable,
             throws IOException, InterruptedException{
         VectorWritable vector = VectorWritable.merge(userPrefs.iterator());
 
+        vector.setWritesLaxPrecision(true);
         context.write(itemKey, vector);
     }
 }

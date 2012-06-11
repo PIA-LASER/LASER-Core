@@ -24,10 +24,10 @@ public class SimilarityMatrixMapper extends Mapper<VarIntWritable, VectorWritabl
             Vector.Element similarity = similarityIterator.next();
 
             //map similarity with inverted index to create sym. matrix
-            Vector invertedIndexSimilarities = new RandomAccessSparseVector(Integer.MAX_VALUE, 1);
+            Vector invertedIndexSimilarities = new RandomAccessSparseVector(Integer.MAX_VALUE);
             invertedIndexSimilarities.set(itemKey.get(), similarity.get());
 
-            context.write(new VarIntWritable(similarity.index()), new VectorWritable(invertedIndexSimilarities));
+            context.write(new VarIntWritable(similarity.index()), new VectorWritable(invertedIndexSimilarities, true));
         }
     }
 }

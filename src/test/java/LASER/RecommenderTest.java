@@ -5,6 +5,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.mahout.cf.taste.hadoop.item.AggregateAndRecommendReducer;
 import org.apache.mahout.cf.taste.hadoop.item.PrefAndSimilarityColumnWritable;
 import org.apache.mahout.math.RandomAccessSparseVector;
+import org.apache.mahout.math.VarIntWritable;
 import org.apache.mahout.math.VarLongWritable;
 import org.apache.mahout.math.Vector;
 import org.junit.Before;
@@ -18,12 +19,12 @@ import java.util.List;
 public class RecommenderTest {
 
     List<PrefAndSimilarityColumnWritable> values;
-    VarLongWritable userID;
+    VarIntWritable userID;
     Reducer.Context context;
 
     @Before
     public void setup() {
-        userID = new VarLongWritable(10);
+        userID = new VarIntWritable(10);
 
         PrefAndSimilarityColumnWritable a = new PrefAndSimilarityColumnWritable();
         Vector simVecA = new RandomAccessSparseVector(Integer.MAX_VALUE, 100);

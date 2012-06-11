@@ -3,6 +3,7 @@ package LASER.mapreduce.preparation;
 import LASER.mapreduce.similarity.measures.Similarity;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.mahout.math.*;
+import org.apache.mahout.math.hadoop.similarity.cooccurrence.Vectors;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -41,10 +42,11 @@ public class ToItemVectorMapper extends Mapper<VarIntWritable, VectorWritable, V
         //map data to item vectors
         int userId = key.get();
 
-        VectorWritable preferencesVector = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1));
-        //preferencesVector.setWritesLaxPrecision(true);
+        Vector userPrefs = Vectors.maybeSample(prefs.get(), 1000);
 
-        Iterator<Vector.Element> iterator = prefs.get().iterateNonZero();
+        VectorWritable preferencesVector = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1), true);
+
+        Iterator<Vector.Element> iterator = userPrefs.iterateNonZero();
 
         while(iterator.hasNext()) {
             Vector.Element elem = iterator.next();

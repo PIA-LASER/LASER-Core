@@ -14,7 +14,6 @@ public class MergeVectorsCombiner extends Reducer<VarIntWritable, VectorWritable
     @Override
     public void reduce(VarIntWritable key, Iterable<VectorWritable> vectors, Context context) throws IOException, InterruptedException{
         Vector vector = Vectors.merge(vectors);
-
-        context.write(key, new VectorWritable(vector));
+        context.write(key, new VectorWritable(vector, true));
     }
 }

@@ -14,6 +14,6 @@ public class VectorNormMergeReducer extends Reducer<VarIntWritable, VectorWritab
     public void reduce(VarIntWritable key, Iterable<VectorWritable> vectors, Context context) throws IOException, InterruptedException {
         Vector mergedVectors = Vectors.merge(vectors);
 
-        context.write(key, new VectorWritable(mergedVectors));
+        context.write(key, new VectorWritable(mergedVectors, true));
     }
 }

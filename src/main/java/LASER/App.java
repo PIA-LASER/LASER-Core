@@ -2,6 +2,7 @@ package LASER;
 
 import LASER.Utils.HDFSUtil;
 import LASER.Utils.HadoopUtil;
+import LASER.io.RedisOutputFormat;
 import LASER.mapreduce.preparation.ToItemVectorMapper;
 import LASER.mapreduce.preparation.ToItemVectorReducer;
 import LASER.mapreduce.preparation.ToUserVectorMapper;
@@ -9,12 +10,18 @@ import LASER.mapreduce.preparation.ToUserVectorReducer;
 import LASER.mapreduce.recommendation.*;
 import LASER.mapreduce.similarity.*;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.mahout.cf.taste.hadoop.item.PrefAndSimilarityColumnWritable;
 import org.apache.mahout.cf.taste.hadoop.item.VectorAndPrefsWritable;
 import org.apache.mahout.cf.taste.hadoop.item.VectorOrPrefWritable;
@@ -23,38 +30,71 @@ import org.apache.mahout.math.VectorWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 
-public class App 
+import java.io.IOException;
+import java.util.HashMap;
+
+public class App extends Configured implements Tool
 {
-    public static void main( String[] args ) throws IOException, InterruptedException, ClassNotFoundException
+    public static void main( String[] args) throws Exception
     {
+        ToolRunner.run(new App(), args);
+    }
+
+    private HashMap<String, String> parseArgs(String[] args) {
+        HashMap<String, String> params = new HashMap<String, String>();
+
+        /*
+        params.put("nameNode", args[0]);
+        params.put("jobTracker", args[1]);
+        params.put("simType", args[2]);
+        params.put("numSim", args[3]);
+        params.put("redisHost", args[4]);
+         */
+        params.put("nameNode", "hdfs://localhost:54310/");
+        params.put("jobTracker", "localhost:54311");
+        params.put("simType", "CosineSimilarity");
+        params.put("numSim", "100");
+        params.put("redisHost", "localhost");
+        params.put("debug", "true");
+
+        return params;
+    }
+
+    @Override
+    public int run(String[] strings) throws IOException, InterruptedException, ClassNotFoundException{
         Logger logger = LoggerFactory.getLogger(App.class);
 
-        HDFSUtil.cleanupTemporaryPath();
-        HDFSUtil.cleanupOutputPath();
+        HashMap<String, String> args = parseArgs(strings);
+
+        //Configuration
+        Configuration conf = new Configuration();
+        conf.set("similarity", args.get("simType"));
+        conf.set("mapred.job.tracker", args.get("jobTracker"));
+        conf.set("fs.default.name", args.get("nameNode"));
+        conf.set("maxSimilarities", args.get("numSim"));
+        conf.set("redisHost", args.get("redisHost"));
+        conf.set("debug", args.get("debug"));
+        conf.set("io.sort.mb","200");
+        conf.set("io.sort.factor","20");
+
+        //HDFSUtil.cleanupTemporaryPath(conf);
+        //HDFSUtil.cleanupDebugPath(conf);
+        //HDFSUtil.cleanupOutputPath(conf);
 
         Path inputPath = HDFSUtil.getInputPath();
         Path outputPath = HDFSUtil.getOutputPath();
-
         Path userVectors = new Path(HDFSUtil.getTemporaryPath(), "userVectors");
         Path itemVectors = new Path(HDFSUtil.getTemporaryPath(), "itemVectors");
         Path normedVectors = new Path(HDFSUtil.getTemporaryPath(), "normedVectors");
         Path partialDots = new Path(HDFSUtil.getTemporaryPath(), "partialDots");
         Path similarityMatrix = new Path(HDFSUtil.getTemporaryPath(), "similarityMatrix");
-
         Path recommendPrepUsers = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepUsers");
         Path recommendPrepItems = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepItems");
-
         Path recommendCombinedMapResults = new Path(recommendPrepItems + "," + recommendPrepUsers);
-
         Path recommendPrepPairs = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepPairs");
-
-        //Configuration
-
-        Configuration config = new Configuration();
-        config.set("similarity","CosineSimilarity");
-
+        Path debugOutputPath = new Path(HDFSUtil.getDebugPath(), "recommendations");
+         /*
         //Map input to user vectors
         Job userVectorJob = HadoopUtil.buildJob(
                 inputPath,
@@ -67,15 +107,15 @@ public class App
                 ToUserVectorReducer.class,
                 VarIntWritable.class,
                 VectorWritable.class,
-                config);
+                conf);
 
         boolean success = userVectorJob.waitForCompletion(true);
 
         if(!success) {
             logger.error("UserVectorJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
-            return;
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
         }
 
         //Map userVectors to itemVectors
@@ -88,15 +128,15 @@ public class App
                 ToItemVectorReducer.class,
                 VarIntWritable.class,
                 VectorWritable.class,
-                config);
+                conf);
 
         success = itemVectorJob.waitForCompletion(true);
 
         if(!success) {
             logger.error("ItemVectorJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
-            return;
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
         }
 
         Job normsJob = HadoopUtil.buildJob(
@@ -108,7 +148,7 @@ public class App
                 VectorNormMergeReducer.class,
                 VarIntWritable.class,
                 VectorWritable.class,
-                config
+                conf
         );
 
         normsJob.setCombinerClass(MergeVectorsCombiner.class);
@@ -118,8 +158,8 @@ public class App
         if(!success) {
             logger.error("VectorNormsJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
-            return;
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
         }
 
         Job partialDotJob = HadoopUtil.buildJob(
@@ -131,7 +171,7 @@ public class App
                 ItemSimilarityReducer.class,
                 VarIntWritable.class,
                 VectorWritable.class,
-                config);
+                conf);
 
         partialDotJob.setCombinerClass(PartialDotSumCombiner.class);
 
@@ -140,7 +180,7 @@ public class App
         if(!success) {
             logger.error("PartialDotJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
+            HDFSUtil.cleanupTemporaryPath(conf);
 
             throw new IllegalStateException();
         }
@@ -154,14 +194,17 @@ public class App
                 MergeVectorsCombiner.class,
                 VarIntWritable.class,
                 VectorWritable.class,
-                config);
+                conf);
+
+
+        symSimilarityMatrixJob.setCombinerClass(TopSimilarityCombiner.class);
 
         success = symSimilarityMatrixJob.waitForCompletion(true);
 
         if(!success) {
             logger.error("SymSimilarityMatrixJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
+            HDFSUtil.cleanupTemporaryPath(conf);
             throw new IllegalStateException();
         }
 
@@ -174,7 +217,7 @@ public class App
                 Reducer.class,
                 VarIntWritable.class,
                 VectorOrPrefWritable.class,
-                new Configuration()
+                conf
         );
 
         success = getItemRowsJob.waitForCompletion(true);
@@ -182,7 +225,7 @@ public class App
         if(!success) {
             logger.error("getItemRowsJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
+            HDFSUtil.cleanupTemporaryPath(conf);
             throw new IllegalStateException();
         }
 
@@ -195,7 +238,7 @@ public class App
                 Reducer.class,
                 VarIntWritable.class,
                 VectorOrPrefWritable.class,
-                new Configuration()
+                conf
         );
 
         success = getUserPrefsJob.waitForCompletion(true);
@@ -203,7 +246,7 @@ public class App
         if(!success) {
             logger.error("getUserPrefsJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
+            HDFSUtil.cleanupTemporaryPath(conf);
             throw new IllegalStateException();
         }
 
@@ -216,7 +259,7 @@ public class App
                 RecommendationPreperationReducer.class,
                 VarIntWritable.class,
                 VectorAndPrefsWritable.class,
-                new Configuration()
+                conf
         );
 
         success = pairItemsAndPrefs.waitForCompletion(true);
@@ -224,20 +267,22 @@ public class App
         if(!success) {
             logger.error("pairItemsAndPrefs failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
+            HDFSUtil.cleanupTemporaryPath(conf);
             throw new IllegalStateException();
         }
 
         Job recommendItems = HadoopUtil.buildJob(
                 recommendPrepPairs,
                 outputPath,
+                SequenceFileInputFormat.class,
+                RedisOutputFormat.class,
                 PrepareRecommendationMapper.class,
                 VarIntWritable.class,
                 PrefAndSimilarityColumnWritable.class,
                 RecommendationReducer.class,
-                VarIntWritable.class,
-                VectorOrPrefWritable.class,
-                new Configuration()
+                Text.class,
+                Text.class,
+                conf
         );
 
         success = recommendItems.waitForCompletion(true);
@@ -245,8 +290,35 @@ public class App
         if(!success) {
             logger.error("Recommendation failed. Aborting.");
             logger.info("Cleaning up temporary files.");
-            HDFSUtil.cleanupTemporaryPath();
+            HDFSUtil.cleanupTemporaryPath(conf);
             throw new IllegalStateException();
         }
+         */
+        if(args.get("debug") == "true") {
+            Job debugRecommendationJob = HadoopUtil.buildJob(
+                    recommendPrepPairs,
+                    debugOutputPath,
+                    SequenceFileInputFormat.class,
+                    TextOutputFormat.class,
+                    PrepareRecommendationMapper.class,
+                    VarIntWritable.class,
+                    PrefAndSimilarityColumnWritable.class,
+                    DebugOutputReducer.class,
+                    Text.class,
+                    Text.class,
+                    conf
+            );
+
+            boolean success = debugRecommendationJob.waitForCompletion(true);
+
+            if(!success) {
+                logger.error("Debug recommendation output failed. Aborting.");
+                logger.info("Cleaning up temporary files.");
+                //HDFSUtil.cleanupTemporaryPath(conf);
+                throw new IllegalStateException();
+            }
+        }
+
+        return 0;
     }
 }

@@ -25,7 +25,7 @@ public class ToUserVectorMapper extends Mapper<LongWritable, Text, VarIntWritabl
         int itemId = Integer.parseInt(tokens[1]);
         float pref = Float.parseFloat(tokens[2]);
 
-        VectorWritable vw = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1));
+        VectorWritable vw = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1), true);
 
         vw.get().setQuick(itemId, pref);
 

@@ -14,6 +14,7 @@ public class ToUserVectorReducer extends Reducer<VarIntWritable, VectorWritable,
             throws IOException, InterruptedException {
 
         VectorWritable vw = VectorWritable.merge(preferences.iterator());
+        vw.setWritesLaxPrecision(true);
 
         context.write(userId, vw);
     }

@@ -1,20 +1,19 @@
 package LASER.mapreduce.recommendation;
 
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.mahout.cf.taste.hadoop.RecommendedItemsWritable;
 import org.apache.mahout.cf.taste.hadoop.item.PrefAndSimilarityColumnWritable;
 import org.apache.mahout.math.VarIntWritable;
-import org.apache.mahout.math.VarLongWritable;
 import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.VectorWritable;
 
 import java.io.IOException;
 import java.util.Iterator;
 
-public class RecommendationReducer extends Reducer<VarIntWritable, PrefAndSimilarityColumnWritable, String[], Double> {
-
+public class DebugOutputReducer extends Reducer<VarIntWritable, PrefAndSimilarityColumnWritable, Text, Text> {
     @Override
     public void reduce(VarIntWritable userId, Iterable<PrefAndSimilarityColumnWritable> values, Context context)
-           throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
 
         Vector numerators = null;
         Vector denominators = null;
@@ -26,13 +25,13 @@ public class RecommendationReducer extends Reducer<VarIntWritable, PrefAndSimila
             Vector similarities = pascw.getSimilarityColumn();
             float preference = pascw.getPrefValue();
 
-            if(numerators == null) {
+            if (numerators == null) {
                 numerators = similarities.times(preference);
             } else {
                 numerators = numerators.plus(similarities.times(preference));
             }
 
-            if(denominators == null) {
+            if (denominators == null) {
                 denominators = similarities;
             } else {
                 denominators = denominators.plus(similarities);
@@ -40,15 +39,15 @@ public class RecommendationReducer extends Reducer<VarIntWritable, PrefAndSimila
         }
 
         Iterator<Vector.Element> itemsIter = numerators.iterateNonZero();
-        while(itemsIter.hasNext()) {
+        while (itemsIter.hasNext()) {
             Vector.Element item = itemsIter.next();
 
             int itemId = item.index();
             double recommendation = numerators.get(itemId) / denominators.get(itemId);
 
-            if(!Double.isNaN(recommendation)){
-                String[] userItemPair = new String[]{new Integer(userId.get()).toString(),new Integer(itemId).toString()};
-                context.write(userItemPair, recommendation);
+            if (!Double.isNaN(recommendation)) {
+                String user = new Integer(userId.get()).toString();
+                context.write(new Text(""), new Text(user + "," + itemId + "," + recommendation));
             }
         }
     }
