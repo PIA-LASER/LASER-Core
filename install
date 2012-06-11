@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mvn clean compile assembly:single && mvn install:install-file -Dfile=target/LASER-1.0-jar-with-dependencies.jar -DgroupId=LASER -DartifactId=LASER -Dversion=1.0 -Dpackaging=jar
+mvn clean compile assembly:single && mvn install:install-file -Dfile=target/LASER-1.0-jar-with-dependencies.jar -DgroupId=LASER -DartifactId=LASER-WITHDEP -Dversion=1.0 -Dpackaging=jar
