@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
-
 public class ToItemVectorMapper extends Mapper<VarIntWritable, VectorWritable, VarIntWritable, VectorWritable> {
 
     Vector norms;
@@ -53,9 +52,5 @@ public class ToItemVectorMapper extends Mapper<VarIntWritable, VectorWritable, V
             preferencesVector.get().setQuick(userId, elem.get());
             context.write(new VarIntWritable(elem.index()), preferencesVector);
         }
-
-        //calculate vector norms
-
-
     }
 }

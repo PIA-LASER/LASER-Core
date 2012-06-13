@@ -35,47 +35,43 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class App extends Configured implements Tool {
+
+
     public static void main(String[] args) throws Exception {
         ToolRunner.run(new App(), args);
     }
 
-    private HashMap<String, String> parseArgs(String[] args) {
-        HashMap<String, String> params = new HashMap<String, String>();
+    public static void run(App app, HashMap<String, String> args) throws Exception {
+        String[] params = new String[args.size()];
 
-        /*
-        params.put("nameNode", args[0]);
-        params.put("jobTracker", args[1]);
-        params.put("simType", args[2]);
-        params.put("numSim", args[3]);
-        params.put("redisHost", args[4]);
-         */
-        params.put("nameNode", "hdfs://localhost:54310/");
-        params.put("jobTracker", "localhost:54311");
-        params.put("simType", "CosineSimilarity");
-        params.put("numSim", "100");
-        params.put("redisHost", "localhost");
-        params.put("debug", "true");
-        params.put("outputTypeBoth", "false");
+        params[0] = args.get("nameNode");
+        params[1] = args.get("jobTracker");
+        params[2] = args.get("simType");
+        params[3] = args.get("numSim");
+        params[4] = args.get("redisHost");
+        params[5] = args.get("debug");
+        params[6] = args.get("outputBoth");
+        params[7] = args.get("io.sort.mb");
+        params[8] = args.get("io.sort.factor");
 
-        return params;
+        main(params);
     }
 
     @Override
-    public int run(String[] strings) throws IOException, InterruptedException, ClassNotFoundException {
+    public int run(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
         Logger logger = LoggerFactory.getLogger(App.class);
-
-        HashMap<String, String> args = parseArgs(strings);
 
         //Configuration
         Configuration conf = new Configuration();
-        conf.set("similarity", args.get("simType"));
-        conf.set("mapred.job.tracker", args.get("jobTracker"));
-        conf.set("fs.default.name", args.get("nameNode"));
-        conf.set("maxSimilarities", args.get("numSim"));
-        conf.set("redisHost", args.get("redisHost"));
-        conf.set("debug", args.get("debug"));
-        conf.set("io.sort.mb", "200");
-        conf.set("io.sort.factor", "20");
+        conf.set("similarity", args[2]);
+        conf.set("mapred.job.tracker", args[1]);
+        conf.set("fs.default.name", args[0]);
+        conf.set("maxSimilarities", args[3]);
+        conf.set("redisHost", args[4]);
+        conf.set("debug", args[5]);
+        conf.set("io.sort.mb", args[7]);
+        conf.set("io.sort.factor", args[8]);
+        conf.set("outputBoth", args[6]);
 
         HDFSUtil.cleanupTemporaryPath(conf);
         HDFSUtil.cleanupDebugPath(conf);
@@ -195,7 +191,6 @@ public class App extends Configured implements Tool {
                 VectorWritable.class,
                 conf);
 
-
         symSimilarityMatrixJob.setCombinerClass(TopSimilarityCombiner.class);
 
         success = symSimilarityMatrixJob.waitForCompletion(true);
@@ -270,7 +265,7 @@ public class App extends Configured implements Tool {
             throw new IllegalStateException();
         }
 
-        if (args.get("debug") == "false" || args.get("outputTypeBoth") == "true") {
+        if (conf.get("debug") == "false" || conf.get("outoutBot") == "true") {
 
             Job recommendItems = HadoopUtil.buildJob(
                     recommendPrepPairs,
@@ -296,7 +291,7 @@ public class App extends Configured implements Tool {
             }
         }
 
-        if (args.get("debug") == "true" || args.get("outputTypeBoth") == "true") {
+        if (conf.get("debug") == "true" || conf.get("outputBoth") == "true") {
             Job debugRecommendationJob = HadoopUtil.buildJob(
                     recommendPrepPairs,
                     debugOutputPath,

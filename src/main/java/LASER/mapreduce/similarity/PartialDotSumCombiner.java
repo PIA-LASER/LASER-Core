@@ -13,8 +13,6 @@ public class PartialDotSumCombiner extends Reducer<VarIntWritable, VectorWritabl
 
     @Override
     public void reduce(VarIntWritable key, Iterable<VectorWritable> dots, Context context) throws IOException, InterruptedException {
-        Iterator<VectorWritable> dotsIter = dots.iterator();
-
         Vector vector = null;
         for (VectorWritable v : dots) {
             if (vector == null) {
