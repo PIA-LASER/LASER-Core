@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mvn clean compile assembly:single && java -jar target/LASER-1.0-jar-with-dependencies.jar hdfs://localhost:54310/ localhost:54311 100 CosineSimilarity localhost
+mvn3 clean compile assembly:single && java -jar target/LASER-1.0-jar-with-dependencies.jar hdfs://master:54310/ master:54311 CosineSimilarity 1000 master false false 200 40

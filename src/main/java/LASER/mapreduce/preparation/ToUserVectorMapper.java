@@ -14,15 +14,15 @@ import java.util.regex.Pattern;
 
 public class ToUserVectorMapper extends Mapper<LongWritable, Text, VarIntWritable, VectorWritable> {
 
-    private static final String SEPARATOR = "[,\t]";
+    private static final String SEPARATOR = "[,]";
     private static Pattern pattern = Pattern.compile(SEPARATOR);
 
     @Override
     protected void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException{
-        String[] tokens = pattern.split(line.toString());
+        String[] tokens = pattern.split(line.toString().trim());
 
         int userId = Integer.parseInt(tokens[0]);
-        int itemId = Integer.parseInt(tokens[1]);
+        int itemId = Integer.parseInt(tokens[2]);
         float pref = Float.parseFloat(tokens[2]);
 
         VectorWritable vw = new VectorWritable(new RandomAccessSparseVector(Integer.MAX_VALUE, 1), true);

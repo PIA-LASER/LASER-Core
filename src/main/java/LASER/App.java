@@ -72,7 +72,7 @@ public class App extends Configured implements Tool {
         conf.set("io.sort.mb", args[7]);
         conf.set("io.sort.factor", args[8]);
         conf.set("outputBoth", args[6]);
-
+	//conf.set("mapred.reduce.tasks","2");
         HDFSUtil.cleanupTemporaryPath(conf);
         HDFSUtil.cleanupDebugPath(conf);
         HDFSUtil.cleanupOutputPath(conf);
@@ -156,6 +156,8 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
+
+	//conf.set("mapred.reduce.tasks","15");
 
         Job partialDotJob = HadoopUtil.buildJob(
                 normedVectors,
@@ -264,8 +266,10 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             throw new IllegalStateException();
         }
+	
+	//conf.set("mapred.reduce.tasks","10");	
 
-        if (conf.get("debug") == "false" || conf.get("outoutBot") == "true") {
+        if (conf.get("debug").equals("false") || conf.get("outoutBot").equals("true")) {
 
             Job recommendItems = HadoopUtil.buildJob(
                     recommendPrepPairs,
@@ -290,8 +294,8 @@ public class App extends Configured implements Tool {
                 throw new IllegalStateException();
             }
         }
-
-        if (conf.get("debug") == "true" || conf.get("outputBoth") == "true") {
+	
+        if (conf.get("debug").equals("true") || conf.get("outputBoth").equals("true")) {
             Job debugRecommendationJob = HadoopUtil.buildJob(
                     recommendPrepPairs,
                     debugOutputPath,
