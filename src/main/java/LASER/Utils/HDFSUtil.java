@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class HDFSUtil {
 
-    private static final String LASER_PATH = "Laser";
+    private static final String LASER_PATH = "Laser/recommendation";
 
     private static Path getLaserPath(){
         return new Path(LASER_PATH);

@@ -1,0 +1,2 @@
+#!/bin/bash
+hadoop jar target/LASER-1.0-jar-with-dependencies.jar hdfs://localhost:54310/ localhost:54311 CosineSimilarity 100 localhost true false 200 20 true Laser/input Laser/output

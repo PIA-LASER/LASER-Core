@@ -8,7 +8,6 @@ import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.math.hadoop.similarity.cooccurrence.Vectors;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 public class MergeVectorsCombiner extends Reducer<VarIntWritable, VectorWritable, VarIntWritable, VectorWritable> {
     @Override
