@@ -12,6 +12,8 @@ import LASER.mapreduce.similarity.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -72,7 +74,7 @@ public class App extends Configured implements Tool {
         conf.set("io.sort.mb", args[7]);
         conf.set("io.sort.factor", args[8]);
         conf.set("outputBoth", args[6]);
-	//conf.set("mapred.reduce.tasks","2");
+        //conf.set("mapred.reduce.tasks","2");
         HDFSUtil.cleanupTemporaryPath(conf);
         HDFSUtil.cleanupDebugPath(conf);
         HDFSUtil.cleanupOutputPath(conf);
@@ -88,7 +90,8 @@ public class App extends Configured implements Tool {
         Path recommendPrepItems = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepItems");
         Path recommendCombinedMapResults = new Path(recommendPrepItems + "," + recommendPrepUsers);
         Path recommendPrepPairs = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepPairs");
-        Path debugOutputPath = new Path(HDFSUtil.getDebugPath(), "recommendations");
+        Path debugOutputPath = new Path(HDFSUtil.getOutputPath(), "recommendations");
+        Path stats = new Path(HDFSUtil.getOutputPath(), "stats");
 
         //Map input to user vectors
         Job userVectorJob = HadoopUtil.buildJob(
@@ -157,7 +160,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-	//conf.set("mapred.reduce.tasks","15");
+        //conf.set("mapred.reduce.tasks","15");
 
         Job partialDotJob = HadoopUtil.buildJob(
                 normedVectors,
@@ -179,7 +182,7 @@ public class App extends Configured implements Tool {
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
 
-            throw new IllegalStateException();
+            return -1;
         }
 
         Job symSimilarityMatrixJob = HadoopUtil.buildJob(
@@ -201,7 +204,7 @@ public class App extends Configured implements Tool {
             logger.error("SymSimilarityMatrixJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
-            throw new IllegalStateException();
+            return -1;
         }
 
         Job getItemRowsJob = HadoopUtil.buildJob(
@@ -222,7 +225,7 @@ public class App extends Configured implements Tool {
             logger.error("getItemRowsJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
-            throw new IllegalStateException();
+            return -1;
         }
 
         Job getUserPrefsJob = HadoopUtil.buildJob(
@@ -243,7 +246,7 @@ public class App extends Configured implements Tool {
             logger.error("getUserPrefsJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
-            throw new IllegalStateException();
+            return -1;
         }
 
         Job pairItemsAndPrefs = HadoopUtil.buildJob(
@@ -264,60 +267,77 @@ public class App extends Configured implements Tool {
             logger.error("pairItemsAndPrefs failed. Aborting.");
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
-            throw new IllegalStateException();
+            return -1;
         }
-	
-	//conf.set("mapred.reduce.tasks","10");	
 
-        if (conf.get("debug").equals("false") || conf.get("outoutBot").equals("true")) {
+        Job recommendItems = HadoopUtil.buildJob(
+                recommendPrepPairs,
+                outputPath,
+                SequenceFileInputFormat.class,
+                RedisOutputFormat.class,
+                PrepareRecommendationMapper.class,
+                VarIntWritable.class,
+                PrefAndSimilarityColumnWritable.class,
+                RecommendationReducer.class,
+                Text.class,
+                Text.class,
+                conf
+        );
 
-            Job recommendItems = HadoopUtil.buildJob(
-                    recommendPrepPairs,
-                    outputPath,
-                    SequenceFileInputFormat.class,
-                    RedisOutputFormat.class,
-                    PrepareRecommendationMapper.class,
-                    VarIntWritable.class,
-                    PrefAndSimilarityColumnWritable.class,
-                    RecommendationReducer.class,
-                    Text.class,
-                    Text.class,
-                    conf
-            );
+        success = recommendItems.waitForCompletion(true);
 
-            success = recommendItems.waitForCompletion(true);
-
-            if (!success) {
-                logger.error("Recommendation failed. Aborting.");
-                logger.info("Cleaning up temporary files.");
-                HDFSUtil.cleanupTemporaryPath(conf);
-                throw new IllegalStateException();
-            }
+        if (!success) {
+            logger.error("Recommendation failed. Aborting.");
+            logger.info("Cleaning up temporary files.");
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
         }
-	
-        if (conf.get("debug").equals("true") || conf.get("outputBoth").equals("true")) {
-            Job debugRecommendationJob = HadoopUtil.buildJob(
-                    recommendPrepPairs,
-                    debugOutputPath,
-                    SequenceFileInputFormat.class,
-                    TextOutputFormat.class,
-                    PrepareRecommendationMapper.class,
-                    VarIntWritable.class,
-                    PrefAndSimilarityColumnWritable.class,
-                    DebugOutputReducer.class,
-                    Text.class,
-                    Text.class,
-                    conf
-            );
 
-            success = debugRecommendationJob.waitForCompletion(true);
+        Job debugRecommendationJob = HadoopUtil.buildJob(
+                recommendPrepPairs,
+                debugOutputPath,
+                SequenceFileInputFormat.class,
+                TextOutputFormat.class,
+                PrepareRecommendationMapper.class,
+                VarIntWritable.class,
+                PrefAndSimilarityColumnWritable.class,
+                DebugOutputReducer.class,
+                Text.class,
+                Text.class,
+                conf
+        );
 
-            if (!success) {
-                logger.error("Debug recommendation output failed. Aborting.");
-                logger.info("Cleaning up temporary files.");
-                HDFSUtil.cleanupTemporaryPath(conf);
-                throw new IllegalStateException();
-            }
+        success = debugRecommendationJob.waitForCompletion(true);
+
+        if (!success) {
+            logger.error("Debug recommendation output failed. Aborting.");
+            logger.info("Cleaning up temporary files.");
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
+        }
+
+
+        Job statsJob = HadoopUtil.buildJob(
+                inputPath,
+                stats,
+                TextInputFormat.class,
+                TextOutputFormat.class,
+                LinkStatsMapper.class,
+                IntWritable.class,
+                LongWritable.class,
+                LinkStatsReducer.class,
+                Text.class,
+                Text.class,
+                conf
+        );
+
+        success = statsJob.waitForCompletion(true);
+
+        if (!success) {
+            logger.error("Calculation statistics failed. Aborting.");
+            logger.info("Cleaning up temporary files.");
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
         }
 
         return 0;
