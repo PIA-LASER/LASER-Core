@@ -27,13 +27,13 @@ public class LinkStatsReducer extends Reducer<IntWritable,LongWritable, Text, Te
         String output = itemId + "," + count + "," + maxAge;
 
         maxAge = maxAge - System.currentTimeMillis() / 1000L;
-        maxAge = maxAge / 3600;
+        double timeAge = maxAge / 3600.0d;
 
         Jedis redis = new Jedis(context.getConfiguration().get("redisHost"));
 
-        double score = count / (Math.pow((double)maxAge,1.8) + 1);
+        double score = (double)count / (Math.pow((double)timeAge,1.8) + 1);
 
-        redis.zadd("urls.popular", score  ,new Integer(itemId.get()).toString());
+        redis.zadd("urls.popular", new Double(score)  ,new Integer(itemId.get()).toString());
 
         redis.disconnect();
 
