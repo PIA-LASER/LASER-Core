@@ -74,7 +74,7 @@ public class App extends Configured implements Tool {
         conf.set("io.sort.mb", args[7]);
         conf.set("io.sort.factor", args[8]);
         conf.set("outputBoth", args[6]);
-        //conf.set("mapred.reduce.tasks","2");
+        conf.set("mapred.reduce.tasks","2");
         HDFSUtil.cleanupTemporaryPath(conf);
         HDFSUtil.cleanupDebugPath(conf);
         HDFSUtil.cleanupOutputPath(conf);
@@ -160,7 +160,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-        //conf.set("mapred.reduce.tasks","15");
+        conf.set("mapred.reduce.tasks","15");
 
         Job partialDotJob = HadoopUtil.buildJob(
                 normedVectors,
@@ -269,7 +269,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-
+	/*
         Job recommendItems = HadoopUtil.buildJob(
                 recommendPrepPairs,
                 outputPath,
@@ -291,7 +291,7 @@ public class App extends Configured implements Tool {
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
-        }
+        }*/
 
         Job debugRecommendationJob = HadoopUtil.buildJob(
                 recommendPrepPairs,
@@ -316,7 +316,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-
+/*
         Job statsJob = HadoopUtil.buildJob(
                 inputPath,
                 stats,
@@ -339,7 +339,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-
+*/
         return 0;
     }
 }
