@@ -100,7 +100,7 @@ public class App extends Configured implements Tool {
         //Map categories to items
 
         boolean success;
-
+               /*
         Job mapItemMapping = HadoopUtil.buildJob(
                 inputPath,
                 catItemMap,
@@ -306,6 +306,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
+        */
 
         Job recommendItems = HadoopUtil.buildJob(
                 recommendPrepPairs,
@@ -329,7 +330,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-
+                 /*
         Job debugRecommendationJob = HadoopUtil.buildJob(
                 recommendPrepPairs,
                 debugOutputPath,
@@ -373,7 +374,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-
+            */
         return 0;
     }
 }

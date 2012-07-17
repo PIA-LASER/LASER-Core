@@ -44,7 +44,9 @@ public class RecommendationReducer extends Reducer<VarIntWritable, PrefAndSimila
             Vector.Element item = itemsIter.next();
 
             int itemId = item.index();
-            double recommendation = numerators.get(itemId) / denominators.get(itemId);
+            double recommendation = numerators.get(itemId); // denominators.get(itemId);
+
+            System.out.println(recommendation);
 
             if(!Double.isNaN(recommendation)){
                 String[] userItemPair = new String[]{new Integer(userId.get()).toString(),new Integer(itemId).toString()};
