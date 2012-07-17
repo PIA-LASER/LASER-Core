@@ -35,11 +35,28 @@ public class RecommendationPreperationReducer extends Reducer<VarIntWritable, Ve
                 similarityVector = vopw.getVector();
             }
         }
+         /*
+
+        System.out.println("Users: ");
+
+        for(int i=0;i<userIDs.size();i++) {
+            System.out.println("User: " + userIDs.get(i) + " , Pref: " + preferences.get(i));
+        }
+
+        Iterator<Vector.Element> simIter = similarityVector.iterateNonZero();
+
+        while (simIter.hasNext())
+        {
+            Vector.Element elem = simIter.next();
+
+            System.out.println("(" + elem.index() + "," + elem.get() +")");
+        }  */
 
         //user has preference for item we do not know
         if(similarityVector == null) {
             return;
         }
+
 
         VectorAndPrefsWritable vapw = new VectorAndPrefsWritable(similarityVector, userIDs, preferences);
 

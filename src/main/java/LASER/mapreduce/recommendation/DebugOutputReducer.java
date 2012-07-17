@@ -23,6 +23,9 @@ public class DebugOutputReducer extends Reducer<VarIntWritable, PrefAndSimilarit
         while (iter.hasNext()) {
             PrefAndSimilarityColumnWritable pascw = iter.next();
             Vector similarities = pascw.getSimilarityColumn();
+
+            Iterator<Vector.Element> simIter = similarities.iterateNonZero();
+
             float preference = pascw.getPrefValue();
 
             if (numerators == null) {
@@ -43,7 +46,7 @@ public class DebugOutputReducer extends Reducer<VarIntWritable, PrefAndSimilarit
             Vector.Element item = itemsIter.next();
 
             int itemId = item.index();
-            double recommendation = numerators.get(itemId) / denominators.get(itemId);
+            double recommendation = numerators.get(itemId);  // denominators.get(itemId);
 
             if (!Double.isNaN(recommendation)) {
                 String user = new Integer(userId.get()).toString();

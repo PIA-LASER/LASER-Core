@@ -9,6 +9,8 @@ import LASER.mapreduce.preparation.ToUserVectorMapper;
 import LASER.mapreduce.preparation.ToUserVectorReducer;
 import LASER.mapreduce.recommendation.*;
 import LASER.mapreduce.similarity.*;
+import LASER.mapreduce.validation.RedditCategoryLinkMapper;
+import LASER.mapreduce.validation.RedditCategoryLinkReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -74,24 +76,55 @@ public class App extends Configured implements Tool {
         conf.set("io.sort.mb", args[7]);
         conf.set("io.sort.factor", args[8]);
         conf.set("outputBoth", args[6]);
-        conf.set("mapred.reduce.tasks","2");
         HDFSUtil.cleanupTemporaryPath(conf);
         HDFSUtil.cleanupDebugPath(conf);
         HDFSUtil.cleanupOutputPath(conf);
 
+        String outputPrefix = conf.get("maxSimilarities") + "_" + conf.get("similarity") + "_";
+
         Path inputPath = HDFSUtil.getInputPath();
         Path outputPath = HDFSUtil.getOutputPath();
-        Path userVectors = new Path(HDFSUtil.getTemporaryPath(), "userVectors");
-        Path itemVectors = new Path(HDFSUtil.getTemporaryPath(), "itemVectors");
-        Path normedVectors = new Path(HDFSUtil.getTemporaryPath(), "normedVectors");
-        Path partialDots = new Path(HDFSUtil.getTemporaryPath(), "partialDots");
-        Path similarityMatrix = new Path(HDFSUtil.getTemporaryPath(), "similarityMatrix");
-        Path recommendPrepUsers = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepUsers");
-        Path recommendPrepItems = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepItems");
+        Path userVectors = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"userVectors");
+        Path itemVectors = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"itemVectors");
+        Path normedVectors = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"normedVectors");
+        Path partialDots = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"partialDots");
+        Path similarityMatrix = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"similarityMatrix");
+        Path recommendPrepUsers = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"recommendPrepUsers");
+        Path recommendPrepItems = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"recommendPrepItems");
         Path recommendCombinedMapResults = new Path(recommendPrepItems + "," + recommendPrepUsers);
-        Path recommendPrepPairs = new Path(HDFSUtil.getTemporaryPath(), "recommendPrepPairs");
-        Path debugOutputPath = new Path(HDFSUtil.getOutputPath(), "recommendations");
-        Path stats = new Path(HDFSUtil.getOutputPath(), "stats");
+        Path recommendPrepPairs = new Path(HDFSUtil.getTemporaryPath(), outputPrefix+"recommendPrepPairs");
+        Path debugOutputPath = new Path(HDFSUtil.getOutputPath(), outputPrefix+"recommendations");
+        Path stats = new Path(HDFSUtil.getOutputPath(), outputPrefix+"stats");
+        Path catItemMap = new Path(HDFSUtil.getOutputPath(), outputPrefix+"itemCatMapping");
+
+        //Map categories to items
+
+        boolean success;
+
+        Job mapItemMapping = HadoopUtil.buildJob(
+                inputPath,
+                catItemMap,
+                TextInputFormat.class,
+                TextOutputFormat.class,
+                RedditCategoryLinkMapper.class,
+                LongWritable.class,
+                LongWritable.class,
+                RedditCategoryLinkReducer.class,
+                Text.class,
+                Text.class,
+                conf
+        );
+
+        success = mapItemMapping.waitForCompletion(true);
+
+        if (!success) {
+            logger.error("mapItemMapping failed. Aborting.");
+            logger.info("Cleaning up temporary files.");
+            HDFSUtil.cleanupTemporaryPath(conf);
+            return -1;
+        }
+
+        //conf.set("mapred.reduce.tasks","2");
 
         //Map input to user vectors
         Job userVectorJob = HadoopUtil.buildJob(
@@ -107,7 +140,7 @@ public class App extends Configured implements Tool {
                 VectorWritable.class,
                 conf);
 
-        boolean success = userVectorJob.waitForCompletion(true);
+        success = userVectorJob.waitForCompletion(true);
 
         if (!success) {
             logger.error("UserVectorJob failed. Aborting.");
@@ -153,6 +186,8 @@ public class App extends Configured implements Tool {
 
         success = normsJob.waitForCompletion(true);
 
+        //bis hier alles fein =)
+
         if (!success) {
             logger.error("VectorNormsJob failed. Aborting.");
             logger.info("Cleaning up temporary files.");
@@ -160,7 +195,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-        conf.set("mapred.reduce.tasks","15");
+        //conf.set("mapred.reduce.tasks","15");
 
         Job partialDotJob = HadoopUtil.buildJob(
                 normedVectors,
@@ -179,11 +214,12 @@ public class App extends Configured implements Tool {
 
         if (!success) {
             logger.error("PartialDotJob failed. Aborting.");
-            logger.info("Cleaning up temporary files.");
+            logger.info("Clecaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
 
             return -1;
         }
+
 
         Job symSimilarityMatrixJob = HadoopUtil.buildJob(
                 partialDots,
@@ -269,6 +305,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
+
 	/*
         Job recommendItems = HadoopUtil.buildJob(
                 recommendPrepPairs,
@@ -316,20 +353,17 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-/*
+
         Job statsJob = HadoopUtil.buildJob(
-                inputPath,
+                userVectors,
                 stats,
-                TextInputFormat.class,
-                TextOutputFormat.class,
-                LinkStatsMapper.class,
-                IntWritable.class,
-                LongWritable.class,
+                ToItemVectorMapper.class,
+                VarIntWritable.class,
+                VectorWritable.class,
                 LinkStatsReducer.class,
-                Text.class,
-                Text.class,
-                conf
-        );
+                VarIntWritable.class,
+                VectorWritable.class,
+                conf);
 
         success = statsJob.waitForCompletion(true);
 
@@ -339,7 +373,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-*/
+
         return 0;
     }
 }

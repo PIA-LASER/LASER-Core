@@ -28,8 +28,8 @@ public class TopSimilarityCombiner extends Reducer<VarIntWritable, VectorWritabl
     public void reduce(VarIntWritable itemId, Iterable<VectorWritable> similarities, Context context)
             throws IOException, InterruptedException{
         Vector simVector = Vectors.merge(similarities);
-        simVector = Vectors.topKElements(numberOfSimilarities, simVector);
+        Vector simVectorReduced = Vectors.topKElements(numberOfSimilarities, simVector);
 
-        context.write(itemId, new VectorWritable(simVector));
+        context.write(itemId, new VectorWritable(simVectorReduced));
     }
 }

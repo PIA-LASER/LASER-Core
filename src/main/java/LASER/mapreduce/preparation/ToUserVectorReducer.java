@@ -6,6 +6,7 @@ import org.apache.mahout.cf.taste.hadoop.EntityPrefWritable;
 import org.apache.mahout.math.*;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 public class ToUserVectorReducer extends Reducer<VarIntWritable, VectorWritable, VarIntWritable, VectorWritable> {
 

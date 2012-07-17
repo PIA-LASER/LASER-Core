@@ -21,6 +21,7 @@ public class PartialDotSumCombiner extends Reducer<VarIntWritable, VectorWritabl
                 vector.assign(v.get(), Functions.PLUS);
             }
         }
+
         context.write(key, new VectorWritable(vector, true));
     }
 }

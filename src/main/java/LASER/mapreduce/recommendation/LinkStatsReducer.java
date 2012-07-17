@@ -1,42 +1,33 @@
 package LASER.mapreduce.recommendation;
 
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.mahout.math.VarIntWritable;
+import org.apache.mahout.math.VectorWritable;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
 
-public class LinkStatsReducer extends Reducer<IntWritable,LongWritable, Text, Text> {
+public class LinkStatsReducer extends Reducer<VarIntWritable,VectorWritable, Text, Text> {
 
     @Override
-    public void reduce(IntWritable itemId, Iterable<LongWritable> timestamps, Context context) throws IOException, InterruptedException{
-        int count = 0;
-        long maxAge = System.currentTimeMillis() / 1000L;
+    public void reduce(VarIntWritable itemId, Iterable<VectorWritable> prefs, Context context) throws IOException, InterruptedException{
+        Configuration conf = context.getConfiguration();
 
-        for (LongWritable timestamp : timestamps) {
-            count++;
+        Jedis con = new Jedis(conf.get("redisHost"));
 
-            if(maxAge > timestamp.get())
-                maxAge = timestamp.get();
+        long totalCount = 0;
+
+        for(VectorWritable vw : prefs) {
+            totalCount += vw.get().getNumNondefaultElements();
         }
 
-        String output = itemId + "," + count + "," + maxAge;
+        con.set("url." + itemId.get() + "popularity", new Long(totalCount).toString());
 
-        maxAge = maxAge - System.currentTimeMillis() / 1000L;
-        double timeAge = maxAge / 3600.0d;
-
-        Jedis redis = new Jedis(context.getConfiguration().get("redisHost"));
-
-        double score = (double)count / (Math.pow((double)timeAge,1.8) + 1);
-
-        redis.zadd("urls.popular", new Double(score)  ,new Integer(itemId.get()).toString());
-
-        redis.disconnect();
-
-        context.write(new Text(), new Text(output));
+        con.disconnect();
     }
 }
