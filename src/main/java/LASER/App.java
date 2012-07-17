@@ -76,8 +76,8 @@ public class App extends Configured implements Tool {
         conf.set("io.sort.mb", args[7]);
         conf.set("io.sort.factor", args[8]);
         conf.set("outputBoth", args[6]);
-        //HDFSUtil.cleanupTemporaryPath(conf);
-        //HDFSUtil.cleanupDebugPath(conf);
+        HDFSUtil.cleanupTemporaryPath(conf);
+        HDFSUtil.cleanupDebugPath(conf);
         HDFSUtil.cleanupOutputPath(conf);
 
         String outputPrefix = conf.get("maxSimilarities") + "_" + conf.get("similarity") + "_";
@@ -100,7 +100,7 @@ public class App extends Configured implements Tool {
         //Map categories to items
 
         boolean success;
-         /*
+
         Job mapItemMapping = HadoopUtil.buildJob(
                 inputPath,
                 catItemMap,
@@ -305,7 +305,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-            */
+
         Job recommendItems = HadoopUtil.buildJob(
                 recommendPrepPairs,
                 outputPath,
@@ -328,7 +328,7 @@ public class App extends Configured implements Tool {
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
         }
-                 /*
+
         Job debugRecommendationJob = HadoopUtil.buildJob(
                 recommendPrepPairs,
                 debugOutputPath,
@@ -371,7 +371,7 @@ public class App extends Configured implements Tool {
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
-        }    */
+        }
 
         return 0;
     }
