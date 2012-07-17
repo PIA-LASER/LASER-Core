@@ -26,7 +26,7 @@ public class LinkStatsReducer extends Reducer<VarIntWritable,VectorWritable, Tex
             totalCount += vw.get().getNumNondefaultElements();
         }
 
-        con.set("url." + itemId.get() + "popularity", new Long(totalCount).toString());
+        con.set("url." + itemId.get() + ".popularity", new Long(totalCount).toString());
 
         con.disconnect();
     }

@@ -124,7 +124,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-        //conf.set("mapred.reduce.tasks","2");
+        conf.set("mapred.reduce.tasks","2");
 
         //Map input to user vectors
         Job userVectorJob = HadoopUtil.buildJob(
@@ -195,7 +195,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-        //conf.set("mapred.reduce.tasks","15");
+        conf.set("mapred.reduce.tasks","15");
 
         Job partialDotJob = HadoopUtil.buildJob(
                 normedVectors,
@@ -306,7 +306,7 @@ public class App extends Configured implements Tool {
             return -1;
         }
 
-	/*
+
         Job recommendItems = HadoopUtil.buildJob(
                 recommendPrepPairs,
                 outputPath,
@@ -328,7 +328,7 @@ public class App extends Configured implements Tool {
             logger.info("Cleaning up temporary files.");
             HDFSUtil.cleanupTemporaryPath(conf);
             return -1;
-        }*/
+        }
 
         Job debugRecommendationJob = HadoopUtil.buildJob(
                 recommendPrepPairs,
