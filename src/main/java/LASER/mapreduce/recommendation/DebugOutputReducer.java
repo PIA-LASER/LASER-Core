@@ -47,7 +47,7 @@ public class DebugOutputReducer extends Reducer<VarIntWritable, PrefAndSimilarit
 
             int itemId = item.index();
             double recommendation = numerators.get(itemId);  // denominators.get(itemId);
-
+	
             if (!Double.isNaN(recommendation)) {
                 String user = new Integer(userId.get()).toString();
                 context.write(new Text(""), new Text(user + "," + itemId + "," + recommendation));
